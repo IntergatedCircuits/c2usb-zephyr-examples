@@ -5,12 +5,12 @@ This repository contains a c2usb Zephyr example application.
 ## Initialization
 
 The first step is to initialize the workspace folder (``my-workspace``) where
-the ``example-application`` and all Zephyr modules will be cloned. Run the following
+the ``usb-keyboard`` and all Zephyr modules will be cloned. Run the following
 command:
 
 ```shell
-# initialize my-workspace for the example-application (main branch)
-west init -m https://github.com/IntergatedCircuits/c2usb-zephyr-examples.git my-workspace
+# initialize my-workspace for the usb-keyboard (main branch)
+west init -m https://github.com/IntergatedCircuits/c2usb-zephyr-examples my-workspace
 # update Zephyr modules
 cd my-workspace
 west update

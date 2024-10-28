@@ -8,11 +8,18 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
 
   projects:
+    - name: c2usb
+      remote: IntergatedCircuits
+      revision: d18c54fcc912f25987e518da7e3503a43919a9d9
+      clone-depth: 1
     - name: zephyr
       remote: zephyrproject-rtos
       revision: v3.7.0
+      clone-depth: 1
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
