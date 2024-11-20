@@ -105,8 +105,9 @@ auto& caps_kb()
 }
 
 static uint8_t serial_number[16]{};
-constexpr usb::product_info product_info{0xffff,       "Zephyr", 0xffff, "HID", usb::version("1.0"),
-                                         serial_number};
+constexpr usb::product_info product_info{CONFIG_DEMO_MANUFACTURER_ID, CONFIG_DEMO_MANUFACTURER,
+                                         CONFIG_DEMO_PRODUCT_ID,      CONFIG_DEMO_PRODUCT,
+                                         usb::version("1.0"),         serial_number};
 
 auto& mac()
 {

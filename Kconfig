@@ -1,0 +1,19 @@
+menu "C2USB demo options"
+
+config DEMO_MANUFACTURER
+	string "USB/BLE device manufacturer string"
+	default "Zephyr Project"
+
+config DEMO_MANUFACTURER_ID
+	hex "USB/BLE device manufacturer ID"
+	default 0x2fe3
+
+config DEMO_PRODUCT
+	string "USB/BLE device product string"
+	default "Demo Product"
+
+config DEMO_PRODUCT_ID
+	hex "USB/BLE device product ID"
+	default 0x0001
+
+endmenu
