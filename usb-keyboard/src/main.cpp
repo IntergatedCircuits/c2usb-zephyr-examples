@@ -34,13 +34,13 @@ auto& kb_msgq()
     return msgq;
 }
 
-static void input_cb(input_event* evt)
+static void input_cb(input_event* evt, void*)
 {
     kb_event kb_evt{evt->code, evt->value};
     kb_msgq().post(kb_evt);
 }
 
-INPUT_CALLBACK_DEFINE(NULL, input_cb);
+INPUT_CALLBACK_DEFINE(nullptr, input_cb, nullptr);
 
 class demo_keyboard : public hid::application
 {
