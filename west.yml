@@ -14,7 +14,7 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: da4ad86f1cd3a4f8b42aa2d9acdd43e384341ce4
+      revision: 4dae70945b09e38ea487193307f017d51dc4c8ee
       clone-depth: 1
     - name: zephyr
       remote: zephyrproject-rtos
