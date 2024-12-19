@@ -88,10 +88,10 @@ class demo_keyboard : public hid::application
     hid::protocol get_protocol() const override { return prot_; }
 
   private:
-    C2USB_USB_TRANSFER_ALIGN(keys_report, keys_buffer_){};
+    alignas(std::uintptr_t) keys_report keys_buffer_{};
     const hid::page::keyboard_keypad key_{};
     const hid::page::leds led_{};
-    C2USB_USB_TRANSFER_ALIGN(kb_leds_report, leds_buffer_){};
+    alignas(std::uintptr_t) kb_leds_report leds_buffer_{};
     static inline unsigned leds_idx{0};
     const unsigned led_idx_;
     hid::protocol prot_{};

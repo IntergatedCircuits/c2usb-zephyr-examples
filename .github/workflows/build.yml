@@ -12,12 +12,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
+        app: [usb-keyboard, usb-mouse]
+        board: [nrf52840dk/nrf52840]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: usb-keyboard
+          path: ${{ matrix.app }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,18 +29,31 @@ jobs:
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: usb-keyboard
+          app-path: ${{ matrix.app }}
           toolchains: arm-zephyr-eabi
 
-      - name: Build firmware
-        working-directory: usb-keyboard
+      - name: Git config
+        working-directory: ${{ matrix.app }}
         shell: bash
         run: |
-          west build -b nrf52840dk/nrf52840 usb-keyboard
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Apply patches
+        working-directory: ${{ matrix.app }}
+        shell: bash
+        run: |
+          west patch
+
+      - name: Build firmware
+        working-directory: ${{ matrix.app }}
+        shell: bash
+        run: |
+          west build -b ${{ matrix.board }} ${{ matrix.app }}
 
       - name: Archive firmware
         uses: actions/upload-artifact@v4
         with:
-          name: usb-keyboard-nrf52840dk
+          name: ${{ matrix.app }}
           path: |
-            usb-keyboard/build/zephyr/zephyr.hex
+            ${{ matrix.app }}/build/zephyr/zephyr.hex
