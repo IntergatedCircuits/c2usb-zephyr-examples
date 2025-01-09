@@ -6,9 +6,6 @@ project(usb-keyboard)
 
 target_sources(app PRIVATE src/main.cpp)
 
-# C headers compiled with C++ give pointer conversion errors, turn them to warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
-
 # link the application to c2usb
 target_link_libraries(app PRIVATE
     c2usb
