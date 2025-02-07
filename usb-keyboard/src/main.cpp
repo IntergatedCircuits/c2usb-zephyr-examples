@@ -1,26 +1,15 @@
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
+#include <iolib.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/input/input.h>
-#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#include <hid/app/keyboard.hpp>
-#include <hid/application.hpp>
-#include <hid/report_protocol.hpp>
-#include <magic_enum.hpp>
+#include <demo_keyboard.hpp>
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <usb/df/class/hid.hpp>
 #include <usb/df/device.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
-
-static const gpio_dt_spec kb_leds[3] = {
-    GPIO_DT_SPEC_GET_OR(DT_ALIAS(led0), gpios, {0}),
-    GPIO_DT_SPEC_GET_OR(DT_ALIAS(led1), gpios, {0}),
-    GPIO_DT_SPEC_GET_OR(DT_ALIAS(led2), gpios, {0}),
-};
 
 struct kb_event
 {
@@ -42,65 +31,14 @@ static void input_cb(input_event* evt, void*)
 
 INPUT_CALLBACK_DEFINE(nullptr, input_cb, nullptr);
 
-class demo_keyboard : public hid::application
-{
-    using keys_report = hid::app::keyboard::keys_input_report<0>;
-    using kb_leds_report = hid::app::keyboard::output_report<0>;
-
-  public:
-    static constexpr auto report_desc() { return hid::app::keyboard::app_report_descriptor<0>(); }
-    static const hid::report_protocol& report_prot()
-    {
-        static constexpr const auto rd{report_desc()};
-        static constexpr const hid::report_protocol rp{rd};
-        return rp;
-    }
-
-    demo_keyboard(hid::page::keyboard_keypad key, hid::page::leds led)
-        : hid::application(report_prot()), key_(key), led_(led), led_idx_(leds_idx++)
-    {}
-    auto send_key(bool set)
-    {
-        keys_buffer_.scancodes.set(key_, set);
-        return send_report(&keys_buffer_);
-    }
-    void start(hid::protocol prot) override
-    {
-        prot_ = prot;
-        LOG_INF("HID start with protocol %s", magic_enum::enum_name(prot).data());
-        receive_report(&leds_buffer_);
-    }
-    void stop() override { LOG_INF("HID stop"); }
-    void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
-    {
-        auto* out_report = reinterpret_cast<const kb_leds_report*>(data.data());
-        if (kb_leds[led_idx_].port != NULL)
-        {
-            gpio_pin_set_dt(&kb_leds[led_idx_], out_report->leds.test(led_));
-        }
-        receive_report(&leds_buffer_);
-    }
-    void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override
-    {
-        send_report(&keys_buffer_);
-    }
-    void in_report_sent(const std::span<const uint8_t>& data) override {}
-    hid::protocol get_protocol() const override { return prot_; }
-
-  private:
-    alignas(std::uintptr_t) keys_report keys_buffer_{};
-    const hid::page::keyboard_keypad key_{};
-    const hid::page::leds led_{};
-    alignas(std::uintptr_t) kb_leds_report leds_buffer_{};
-    static inline unsigned leds_idx{0};
-    const unsigned led_idx_;
-    hid::protocol prot_{};
-};
-
 auto& caps_kb()
 {
     static demo_keyboard caps_lock{hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK,
-                                   hid::page::leds::CAPS_LOCK};
+                                   [](const demo_keyboard::kb_leds_report& report)
+                                   {
+                                       iolib_set_led(0,
+                                                     report.leds.test(hid::page::leds::CAPS_LOCK));
+                                   }};
     return caps_lock;
 }
 
@@ -124,26 +62,6 @@ auto& device()
 //[[noreturn]]
 int main(void)
 {
-    // initializing LEDs
-    for (unsigned int i = 0; i < ARRAY_SIZE(kb_leds); i++)
-    {
-        if (kb_leds[i].port == NULL)
-        {
-            continue;
-        }
-        if (!gpio_is_ready_dt(&kb_leds[i]))
-        {
-            LOG_ERR("LED device %s is not ready", kb_leds[i].port->name);
-            return -EIO;
-        }
-        auto ret = gpio_pin_configure_dt(&kb_leds[i], GPIO_OUTPUT_INACTIVE);
-        if (ret != 0)
-        {
-            LOG_ERR("Failed to configure the LED pin, %d", ret);
-            return -EIO;
-        }
-    }
-
     // observing device state
     device().set_power_event_delegate(
         [](usb::df::device& dev, usb::df::device::event ev)
@@ -152,13 +70,13 @@ int main(void)
             switch (ev)
             {
             case event::CONFIGURATION_CHANGE:
-                printk("USB configured: %u, granted current: %uuA\n", dev.configured(),
-                       dev.granted_bus_current_uA());
+                LOG_INF("USB configured: %u, granted current: %uuA\n", dev.configured(),
+                        dev.granted_bus_current_uA());
                 break;
             case event::POWER_STATE_CHANGE:
-                printk("USB power state: %s, granted current: %uuA\n",
-                       magic_enum::enum_name(dev.power_state()).data(),
-                       dev.granted_bus_current_uA());
+                LOG_INF("USB power state: %s, granted current: %uuA\n",
+                        magic_enum::enum_name(dev.power_state()).data(),
+                        dev.granted_bus_current_uA());
                 switch (dev.power_state())
                 {
                 case usb::power::state::L2_SUSPEND:

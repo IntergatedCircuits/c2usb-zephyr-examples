@@ -2,3 +2,5 @@
 if(NOT CONFIG_DEBUG)
     add_definitions(-DNDEBUG)
 endif()
+
+add_subdirectory(lib)

@@ -1,13 +1,10 @@
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
+#include <iolib.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/input/input.h>
-#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
 #include <hid/app/mouse.hpp>
 #include <hid/application.hpp>
-#include <hid/report_protocol.hpp>
 #include <magic_enum.hpp>
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
@@ -15,10 +12,6 @@
 #include <usb/df/device.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
-
-static const gpio_dt_spec kb_leds[1] = {
-    GPIO_DT_SPEC_GET_OR(DT_ALIAS(led0), gpios, {0}),
-};
 
 struct kb_event
 {
@@ -140,7 +133,7 @@ class demo_mouse : public hid::application
     }
     void stop() override
     {
-        gpio_pin_set_dt(&kb_leds[0], 0);
+        iolib_set_led(0, false);
         LOG_INF("HID stop");
     }
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
@@ -149,7 +142,7 @@ class demo_mouse : public hid::application
         {
             multiplier_report_ =
                 *reinterpret_cast<const resolution_multiplier_report*>(data.data());
-            gpio_pin_set_dt(&kb_leds[0], multiplier_report_.resolutions != 0);
+            iolib_set_led(0, multiplier_report_.resolutions != 0);
             receive_report(&multiplier_report_);
         }
     }
@@ -198,26 +191,6 @@ auto& device()
 //[[noreturn]]
 int main(void)
 {
-    // initializing LEDs
-    for (unsigned int i = 0; i < ARRAY_SIZE(kb_leds); i++)
-    {
-        if (kb_leds[i].port == NULL)
-        {
-            continue;
-        }
-        if (!gpio_is_ready_dt(&kb_leds[i]))
-        {
-            LOG_ERR("LED device %s is not ready", kb_leds[i].port->name);
-            return -EIO;
-        }
-        auto ret = gpio_pin_configure_dt(&kb_leds[i], GPIO_OUTPUT_INACTIVE);
-        if (ret != 0)
-        {
-            LOG_ERR("Failed to configure the LED pin, %d", ret);
-            return -EIO;
-        }
-    }
-
     // observing device state
     device().set_power_event_delegate(
         [](usb::df::device& dev, usb::df::device::event ev)
@@ -226,13 +199,13 @@ int main(void)
             switch (ev)
             {
             case event::CONFIGURATION_CHANGE:
-                printk("USB configured: %u, granted current: %uuA\n", dev.configured(),
-                       dev.granted_bus_current_uA());
+                LOG_INF("USB configured: %u, granted current: %uuA\n", dev.configured(),
+                        dev.granted_bus_current_uA());
                 break;
             case event::POWER_STATE_CHANGE:
-                printk("USB power state: %s, granted current: %uuA\n",
-                       magic_enum::enum_name(dev.power_state()).data(),
-                       dev.granted_bus_current_uA());
+                LOG_INF("USB power state: %s, granted current: %uuA\n",
+                        magic_enum::enum_name(dev.power_state()).data(),
+                        dev.granted_bus_current_uA());
                 switch (dev.power_state())
                 {
                 case usb::power::state::L2_SUSPEND:
