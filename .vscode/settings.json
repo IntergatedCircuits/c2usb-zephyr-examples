@@ -1,7 +1,8 @@
 {
     "nrf-connect.applications": [
         "${workspaceFolder}/usb-keyboard",
-        "${workspaceFolder}/usb-mouse"
+        "${workspaceFolder}/usb-mouse",
+        "${workspaceFolder}/ble-keyboard"
     ],
     "editor.formatOnSave": true,
 }

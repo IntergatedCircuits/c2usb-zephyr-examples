@@ -1,9 +1,9 @@
-#include <iolib.h>
+#include "iolib.h"
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
-#include <demo_keyboard.hpp>
+#include "demo_keyboard.hpp"
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <usb/df/class/hid.hpp>
@@ -11,35 +11,27 @@
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
-struct kb_event
-{
-    uint16_t code;
-    int32_t value;
-};
-
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue<kb_event, 2> msgq;
+    static os::zephyr::message_queue<input_event, 2> msgq;
     return msgq;
 }
 
 static void input_cb(input_event* evt, void*)
 {
-    kb_event kb_evt{evt->code, evt->value};
-    kb_msgq().post(kb_evt);
+    kb_msgq().post(*evt);
 }
 
 INPUT_CALLBACK_DEFINE(nullptr, input_cb, nullptr);
 
-auto& caps_kb()
+auto& keyboard_app()
 {
-    static demo_keyboard caps_lock{hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK,
-                                   [](const demo_keyboard::kb_leds_report& report)
-                                   {
-                                       iolib_set_led(0,
-                                                     report.leds.test(hid::page::leds::CAPS_LOCK));
-                                   }};
-    return caps_lock;
+    static demo_keyboard keyb{hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK,
+                              [](const demo_keyboard::kb_leds_report& report)
+                              {
+                                  iolib_set_led(0, report.leds.test(hid::page::leds::CAPS_LOCK));
+                              }};
+    return keyb;
 }
 
 static uint8_t serial_number[16]{};
@@ -102,7 +94,7 @@ int main(void)
         constexpr auto config_header =
             usb::df::config::header(usb::df::config::power::bus(500, true), "base config");
 
-        static usb::df::hid::function usb_kb{caps_kb(), "keyboard",
+        static usb::df::hid::function usb_kb{keyboard_app(), "keyboard",
                                              usb::hid::boot_protocol_mode::KEYBOARD};
 
         static const auto base_config = usb::df::config::make_config(
@@ -122,7 +114,7 @@ int main(void)
         switch (msg.code)
         {
         case INPUT_KEY_0:
-            caps_kb().send_key(msg.value);
+            keyboard_app().send_key(msg.value);
             break;
         default:
             break;

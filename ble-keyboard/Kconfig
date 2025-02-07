@@ -1,0 +1,31 @@
+rsource "../Kconfig"
+
+configdefault BT_DIS_MANUF
+	default DEMO_MANUFACTURER
+
+configdefault BT_DIS_MODEL
+	default DEMO_PRODUCT
+
+configdefault BT_DIS_PNP
+	default y
+
+configdefault BT_DIS_PNP_VID
+	default DEMO_MANUFACTURER_ID
+
+configdefault BT_DIS_PNP_PID
+	default DEMO_PRODUCT_ID
+
+menu "BLE Keyboard sample"
+
+config SETTINGS
+	default y
+
+config ZMS
+	default y if SOC_FLASH_NRF_RRAM
+
+config NVS
+	default y if !SOC_FLASH_NRF_RRAM
+
+endmenu
+
+source "Kconfig.zephyr"

@@ -80,6 +80,29 @@
             "problemMatcher": [
                 "$gcc"
             ]
+        },
+        {
+            "label": "Build ble-keyboard for nrf52840dk",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "type": "process",
+            "command": "west",
+            "args": [
+                "build",
+                "--build-dir",
+                "${cwd}/ble-keyboard/build/nrf52840dk",
+                "${cwd}/ble-keyboard",
+                "--board",
+                "nrf52840dk/nrf52840"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

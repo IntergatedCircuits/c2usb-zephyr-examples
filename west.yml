@@ -14,7 +14,7 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 80e73ec710e46c26f0c206d067632dfdadcab492
+      revision: f7daa567af0404bd5417669e08129efa5c29a63e
       clone-depth: 1
     - name: zephyr
       remote: zephyrproject-rtos
@@ -24,5 +24,6 @@ manifest:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
         name-allowlist:
-          - cmsis      # required by the ARM port
-          - hal_nordic # required by the custom_plank board (Nordic based)
+          - cmsis
+          - hal_nordic
+          - tinycrypt
