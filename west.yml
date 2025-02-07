@@ -8,6 +8,8 @@ manifest:
   remotes:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
+    - name: nrfconnect
+      url-base: https://github.com/nrfconnect
     - name: IntergatedCircuits
       url-base: https://github.com/IntergatedCircuits
 
@@ -16,14 +18,17 @@ manifest:
       remote: IntergatedCircuits
       revision: f7daa567af0404bd5417669e08129efa5c29a63e
       clone-depth: 1
-    - name: zephyr
-      remote: zephyrproject-rtos
-      revision: v4.0.0
+    - name: nrf
+      repo-path: sdk-nrf
+      remote: nrfconnect
+      revision: v2.9.0
       clone-depth: 1
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
         name-allowlist:
+          - zephyr
           - cmsis
           - hal_nordic
+          - nrfxlib
           - tinycrypt
