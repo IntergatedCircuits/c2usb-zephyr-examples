@@ -2,6 +2,7 @@
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/hci.h>
 #include <zephyr/bluetooth/services/bas.h>
+#include <zephyr/drivers/hwinfo.h>
 #include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -12,6 +13,7 @@
 #include <port/zephyr/bluetooth/hid.hpp>
 #include <port/zephyr/bluetooth/le.hpp>
 #include <port/zephyr/message_queue.hpp>
+#include <usb/df/message.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
@@ -257,8 +259,18 @@ static void le_param_updated(bt_conn* conn, uint16_t interval, uint16_t latency,
             latency, timeout * 10);
 }
 
+char serial_number_str[33];
+
 int main(void)
 {
+    // use HW info as serial number
+    if (IS_ENABLED(CONFIG_HWINFO))
+    {
+        uint8_t serial_number[16]{};
+        auto n = hwinfo_get_device_id(serial_number, sizeof(serial_number));
+        usb::df::string_message::to_hex_string(std::span<const uint8_t>(serial_number, n),
+                                               std::span<char>(serial_number_str));
+    }
     if (auto err = bt_conn_auth_cb_register(&conn_auth_callbacks); err)
     {
         LOG_ERR("Failed to register authorization callbacks.\n");
