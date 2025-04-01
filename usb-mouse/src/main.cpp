@@ -21,7 +21,7 @@ struct kb_event
 
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue<kb_event, 2> msgq;
+    static os::zephyr::message_queue_instance<kb_event, 2> msgq;
     return msgq;
 }
 
@@ -39,6 +39,9 @@ class demo_mouse : public hid::application
     static constexpr int16_t AXIS_LIMIT = 127;
     static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
     static constexpr int16_t WHEEL_LIMIT = 32767;
+
+    // Linux only works if a report ID is used
+    static constexpr uint8_t MOUSE_REPORT_ID = 1;
 
   public:
     template <uint8_t REPORT_ID = 0>
@@ -65,9 +68,9 @@ class demo_mouse : public hid::application
 
         bool steady() const { return (x == 0) && (y == 0) && (wheel_y == 0) && (wheel_x == 0); }
     };
-    using mouse_report = mouse_report_base<>;
+    using mouse_report = mouse_report_base<MOUSE_REPORT_ID>;
     using resolution_multiplier_report =
-        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION>;
+        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION, MOUSE_REPORT_ID>;
 
   private:
     alignas(std::uintptr_t) mouse_report in_report_{};
@@ -85,6 +88,7 @@ class demo_mouse : public hid::application
             usage_page<generic_desktop>(),
             usage(generic_desktop::MOUSE),
             collection::application(
+                conditional_report_id<MOUSE_REPORT_ID>(),
                 usage(generic_desktop::POINTER),
                 collection::physical(
                     // buttons
@@ -138,13 +142,22 @@ class demo_mouse : public hid::application
     }
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
     {
-        if (type == resolution_multiplier_report::type())
+        if (type != resolution_multiplier_report::type())
+        {
+            return;
+        }
+        if (data.size() == sizeof(resolution_multiplier_report))
         {
             multiplier_report_ =
                 *reinterpret_cast<const resolution_multiplier_report*>(data.data());
-            iolib_set_led(0, multiplier_report_.resolutions != 0);
-            receive_report(&multiplier_report_);
         }
+        else
+        {
+            multiplier_report_.resolutions = 0;
+        }
+        iolib_set_led(0, multiplier_report_.resolutions != 0);
+        LOG_INF("multiplier report: %x (%d)", multiplier_report_.resolutions, data.size());
+        receive_report(&multiplier_report_);
     }
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override
     {
@@ -160,7 +173,7 @@ class demo_mouse : public hid::application
         }
         // assert(false);
     }
-    void in_report_sent(const std::span<const uint8_t>& data) override {}
+    // void in_report_sent(const std::span<const uint8_t>& data) override {}
     hid::protocol get_protocol() const override { return prot_; }
     const auto& multiplier_report() const { return multiplier_report_; }
 };
@@ -196,26 +209,16 @@ int main(void)
         [](usb::df::device& dev, usb::df::device::event ev)
         {
             using event = enum usb::df::device::event;
-            switch (ev)
+            if (ev == event::CONFIGURATION_CHANGE)
             {
-            case event::CONFIGURATION_CHANGE:
-                LOG_INF("USB configured: %u, granted current: %uuA\n", dev.configured(),
+                LOG_INF("USB configured: %u, granted current: %uuA", dev.configured(),
                         dev.granted_bus_current_uA());
-                break;
-            case event::POWER_STATE_CHANGE:
-                LOG_INF("USB power state: %s, granted current: %uuA\n",
+            }
+            else
+            {
+                LOG_INF("USB power state: %s, granted current: %uuA",
                         magic_enum::enum_name(dev.power_state()).data(),
                         dev.granted_bus_current_uA());
-                switch (dev.power_state())
-                {
-                case usb::power::state::L2_SUSPEND:
-                    break;
-                case usb::power::state::L0_ON:
-                    break;
-                default:
-                    break;
-                }
-                break;
             }
         });
 
@@ -225,7 +228,6 @@ int main(void)
         hwinfo_get_device_id(serial_number, sizeof(serial_number));
     }
     // define configuration and start device
-    const auto usb_init = []()
     {
         constexpr auto speed = usb::speed::FULL;
         constexpr auto config_header =
@@ -238,8 +240,7 @@ int main(void)
             config_header, usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x81), 1));
         device().set_config(base_config);
         device().open();
-    };
-    mac().queue_task(usb_init);
+    }
 
     // button 3 is the left mouse button
     // buttons 1 and 2 are either scrolling, or moving the cursor horizontally - depending on button
@@ -259,7 +260,7 @@ int main(void)
         {
             if (msg && (msg->value))
             {
-                mac().queue_task([]() { device().remote_wakeup(); });
+                device().remote_wakeup();
             }
             continue;
         }

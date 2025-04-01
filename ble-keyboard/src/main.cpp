@@ -9,13 +9,14 @@
 #include <zephyr/settings/settings.h>
 #include <zephyr/shell/shell.h>
 
-#include "demo_keyboard.hpp"
 #include <port/zephyr/bluetooth/hid.hpp>
 #include <port/zephyr/bluetooth/le.hpp>
 #include <port/zephyr/message_queue.hpp>
 #include <usb/df/message.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
+
+#include "demo_keyboard.hpp"
 
 static const uint8_t adv_led = 1;
 
@@ -53,7 +54,7 @@ static int advertise(void)
 
 auto& pairing_msgq()
 {
-    static os::zephyr::message_queue<::bt_conn*, CONFIG_BT_MAX_CONN> msgq;
+    static os::zephyr::message_queue_instance<::bt_conn*, CONFIG_BT_MAX_CONN> msgq;
     return msgq;
 }
 
@@ -232,7 +233,7 @@ static auto& hog_service()
 
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue<input_event, 2> msgq;
+    static os::zephyr::message_queue_instance<input_event, 2> msgq;
     return msgq;
 }
 

@@ -3,7 +3,6 @@
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
-#include "demo_keyboard.hpp"
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <usb/df/class/hid.hpp>
@@ -11,9 +10,13 @@
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
+#include "demo_keyboard.hpp"
+
+using namespace magic_enum::bitwise_operators;
+
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue<input_event, 2> msgq;
+    static os::zephyr::message_queue_instance<input_event, 2> msgq;
     return msgq;
 }
 
@@ -58,27 +61,16 @@ int main(void)
     device().set_power_event_delegate(
         [](usb::df::device& dev, usb::df::device::event ev)
         {
-            using event = enum usb::df::device::event;
-            switch (ev)
+            if (ev == usb::df::device::event::CONFIGURATION_CHANGE)
             {
-            case event::CONFIGURATION_CHANGE:
-                LOG_INF("USB configured: %u, granted current: %uuA\n", dev.configured(),
+                LOG_INF("USB configured: %u, granted current: %uuA", dev.configured(),
                         dev.granted_bus_current_uA());
-                break;
-            case event::POWER_STATE_CHANGE:
-                LOG_INF("USB power state: %s, granted current: %uuA\n",
+            }
+            else
+            {
+                LOG_INF("USB power state: %s, granted current: %uuA",
                         magic_enum::enum_name(dev.power_state()).data(),
                         dev.granted_bus_current_uA());
-                switch (dev.power_state())
-                {
-                case usb::power::state::L2_SUSPEND:
-                    break;
-                case usb::power::state::L0_ON:
-                    break;
-                default:
-                    break;
-                }
-                break;
             }
         });
 
@@ -88,34 +80,44 @@ int main(void)
         hwinfo_get_device_id(serial_number, sizeof(serial_number));
     }
     // define configuration and start device
-    const auto usb_init = []()
     {
         constexpr auto speed = usb::speed::FULL;
-        constexpr auto config_header =
-            usb::df::config::header(usb::df::config::power::bus(500, true), "base config");
+        constexpr auto config_header = usb::df::config::header(
+            usb::df::config::power::bus(500, true), "base config but make it longer.");
 
         static usb::df::hid::function usb_kb{keyboard_app(), "keyboard",
                                              usb::hid::boot_protocol_mode::KEYBOARD};
 
         static const auto base_config = usb::df::config::make_config(
-            config_header, usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1));
+            config_header, usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1
+#if 0
+            , usb::endpoint::address(0x01), 10
+#endif
+                                                ));
         device().set_config(base_config);
         device().open();
-    };
-    mac().queue_task(usb_init);
+    }
 
     while (true)
     {
         auto msg = kb_msgq().get();
         if ((msg.value) && device().power_state() == usb::power::state::L2_SUSPEND)
         {
-            mac().queue_task([]() { device().remote_wakeup(); });
+            device().remote_wakeup();
         }
         switch (msg.code)
         {
         case INPUT_KEY_0:
             keyboard_app().send_key(msg.value);
             break;
+#if 0
+        case INPUT_KEY_1:
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_ENTER, msg.value);
+            break;
+        case INPUT_KEY_2:
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_F1, msg.value);
+            break;
+#endif
         default:
             break;
         }

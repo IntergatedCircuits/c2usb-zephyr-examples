@@ -1,5 +1,3 @@
-#include <zephyr/sys/printk.h>
-
 #include <etl/delegate.h>
 #include <hid/app/keyboard.hpp>
 #include <hid/application.hpp>
@@ -28,17 +26,23 @@ class demo_keyboard : public hid::application
         keys_buffer_.scancodes.set(key_, set);
         return send_report(&keys_buffer_);
     }
+    auto send_key(hid::page::keyboard_keypad key, bool set)
+    {
+        keys_buffer_.scancodes.set(key, set);
+        return send_report(&keys_buffer_);
+    }
     void start(hid::protocol prot) override
     {
         prot_ = prot;
-        printk("HID start with protocol %s\n", magic_enum::enum_name(prot).data());
+        LOG_INF("HID start with protocol %s", magic_enum::enum_name(prot).data());
         receive_report(&leds_buffer_);
     }
-    void stop() override { printk("HID stop\n"); }
+    void stop() override { LOG_INF("HID stop"); }
     void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
     {
         auto* out_report = reinterpret_cast<const kb_leds_report*>(data.data());
         cbk_(*out_report);
+        LOG_INF("LEDs report: %x", data.data()[kb_leds_report::has_id()]);
         receive_report(&leds_buffer_);
     }
     void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override

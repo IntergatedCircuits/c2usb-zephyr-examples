@@ -16,7 +16,7 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 891665bb540bca0abf84910bef3fa4946bf6d26b
+      revision: cac26fa089687f7fd2e85a7213a99af03c6a8758
       clone-depth: 1
     - name: nrf
       repo-path: sdk-nrf
