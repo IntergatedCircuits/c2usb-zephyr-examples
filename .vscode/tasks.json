@@ -1,6 +1,6 @@
 {
-	"version": "2.0.0",
-	"tasks": [
+    "version": "2.0.0",
+    "tasks": [
         {
             "label": "West update",
             "group": {
@@ -74,6 +74,29 @@
                 "--build-dir",
                 "${cwd}/usb-mouse/build/nrf52840dk",
                 "${cwd}/usb-mouse",
+                "--board",
+                "nrf52840dk/nrf52840"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Build usb-shell for nrf52840dk",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "type": "process",
+            "command": "west",
+            "args": [
+                "build",
+                "--build-dir",
+                "${cwd}/usb-shell/build/nrf52840dk",
+                "${cwd}/usb-shell",
                 "--board",
                 "nrf52840dk/nrf52840"
             ],

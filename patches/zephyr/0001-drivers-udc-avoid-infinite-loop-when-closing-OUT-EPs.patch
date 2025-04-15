@@ -1,0 +1,27 @@
+From 2275a93c3cef6a920b36797488bf74ade0147ad9 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Wed, 16 Apr 2025 09:34:37 +0200
+Subject: [PATCH] drivers: udc: avoid infinite loop when closing OUT EPs
+
+---
+ drivers/usb/udc/udc_common.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/usb/udc/udc_common.c b/drivers/usb/udc/udc_common.c
+index 86f5a7f854..065c705cc3 100644
+--- a/drivers/usb/udc/udc_common.c
++++ b/drivers/usb/udc/udc_common.c
+@@ -145,6 +145,10 @@ struct net_buf *udc_buf_get_all(const struct device *dev, const uint8_t ep)
+ 	LOG_DBG("ep 0x%02x dequeue %p", ep, buf);
+ 	for (struct net_buf *n = buf; !k_fifo_is_empty(&ep_cfg->fifo); n = n->frags) {
+ 		n->frags = k_fifo_get(&ep_cfg->fifo, K_NO_WAIT);
++		if (n->frags == n) {
++			LOG_WRN("ep 0x%02x dequeue FIFO corrupt: %p", ep, n);
++			n->frags = NULL;
++		}
+ 		LOG_DBG("|-> %p ", n->frags);
+ 		if (n->frags == NULL) {
+ 			break;
+-- 
+2.44.0
+

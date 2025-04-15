@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        app: [ble-keyboard, usb-keyboard, usb-mouse]
+        app: [ble-keyboard, usb-keyboard, usb-mouse, usb-shell]
         board: [nrf52840dk/nrf52840]
     runs-on: ${{ matrix.os }}
     steps:
@@ -56,4 +56,4 @@ jobs:
         with:
           name: ${{ matrix.app }}
           path: |
-            ${{ matrix.app }}/build/zephyr/zephyr.hex
+            ${{ matrix.app }}/build/${{ matrix.app }}/zephyr/zephyr.hex

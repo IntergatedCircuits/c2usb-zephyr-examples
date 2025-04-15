@@ -12,6 +12,7 @@
 #include <port/zephyr/bluetooth/hid.hpp>
 #include <port/zephyr/bluetooth/le.hpp>
 #include <port/zephyr/message_queue.hpp>
+#include <raw_to_hex_string.hpp>
 #include <usb/df/message.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
@@ -269,8 +270,8 @@ int main(void)
     {
         uint8_t serial_number[16]{};
         auto n = hwinfo_get_device_id(serial_number, sizeof(serial_number));
-        usb::df::string_message::to_hex_string(std::span<const uint8_t>(serial_number, n),
-                                               std::span<char>(serial_number_str));
+        c2usb::raw_to_hex_string(std::span<const uint8_t>(serial_number, n),
+                                 std::span<char>(serial_number_str));
     }
     if (auto err = bt_conn_auth_cb_register(&conn_auth_callbacks); err)
     {

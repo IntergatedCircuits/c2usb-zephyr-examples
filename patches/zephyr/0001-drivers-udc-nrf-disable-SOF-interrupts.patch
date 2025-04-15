@@ -1,7 +1,7 @@
 From a64431fb94f0bec11c74e47497d146a26c27df0e Mon Sep 17 00:00:00 2001
 From: Benedek Kupper <kupper.benedek@gmail.com>
 Date: Thu, 27 Mar 2025 10:30:49 +0100
-Subject: [PATCH] udc: nrf: disable SOF interrupts
+Subject: [PATCH] drivers: udc: nrf: disable SOF interrupts
 
 ---
  drivers/usb/udc/udc_nrf.c | 2 +-
