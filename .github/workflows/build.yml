@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-24.04]
         app: [ble-keyboard, usb-keyboard, usb-mouse, usb-shell]
         board: [nrf52840dk/nrf52840]
     runs-on: ${{ matrix.os }}

@@ -1,0 +1,59 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "Manifest repository"
+		},
+		{
+			"path": "../c2usb",
+			"name": "c2usb"
+		},
+		{
+			"path": "ble-keyboard"
+		},
+		{
+			"path": "usb-keyboard"
+		},
+		{
+			"path": "usb-mouse"
+		},
+		{
+			"path": "usb-shell"
+		}
+	],
+	"settings": {
+		"editor.formatOnSave": true,
+		"nrf-connect.applications": [
+			"${workspaceFolder}/ble-keyboard",
+			"${workspaceFolder}/usb-keyboard",
+			"${workspaceFolder}/usb-mouse",
+			"${workspaceFolder}/usb-shell"
+		],
+    "nrf-connect.topdir": "${workspaceFolder}/..",
+		"nrf-connect.applicationOptions": {
+			"${workspaceFolder}/device": {
+				"flash": {
+					"softreset": true
+				}
+			}
+		},
+		"nrf-connect.boardRoots": [
+			"${workspaceFolder}/"
+		],
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"*.hpp": "cpp",
+			"*.cpp": "cpp"
+		},
+		"cmake.useCMakePresets": "always",
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false
+	},
+	"extensions": {
+		"recommendations": [
+			"nordic-semiconductor.nrf-connect-extension-pack"
+		]
+	}
+}
