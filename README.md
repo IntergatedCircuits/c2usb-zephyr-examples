@@ -14,6 +14,7 @@ west init -m https://github.com/IntergatedCircuits/c2usb-zephyr-examples c2usb-w
 # update Zephyr modules
 cd c2usb-workspace
 west update
+west patch
 ```
 
 ## Application Index
