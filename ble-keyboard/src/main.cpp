@@ -17,7 +17,7 @@
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
-#include "demo_keyboard.hpp"
+#include "simple_keyboard.hpp"
 
 static const uint8_t adv_led = 1;
 
@@ -209,11 +209,11 @@ SHELL_CMD_REGISTER(bt, &sub_bt, "BT", NULL);
 
 auto& keyboard_app()
 {
-    static demo_keyboard keyb{hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK,
-                              [](const demo_keyboard::kb_leds_report& report)
-                              {
-                                  iolib_set_led(0, report.leds.test(hid::page::leds::CAPS_LOCK));
-                              }};
+    static simple_keyboard<> keyb{[](const simple_keyboard<>::kb_leds_report& report)
+                                  {
+                                      iolib_set_led(0,
+                                                    report.leds.test(hid::page::leds::CAPS_LOCK));
+                                  }};
     return keyb;
 }
 
@@ -226,7 +226,7 @@ static auto& hog_service()
     static const auto security = security::ENCRYPT;
     static const auto features = flags::NORMALLY_CONNECTABLE | flags::REMOTE_WAKE;
 
-    static service_instance<hid::report_protocol_properties(demo_keyboard::report_desc()),
+    static service_instance<hid::report_protocol_properties(simple_keyboard<>::report_desc()),
                             boot_protocol_mode::KEYBOARD>
         hog{keyboard_app(), security, features};
     return hog;
@@ -305,7 +305,7 @@ int main(void)
         switch (msg.code)
         {
         case INPUT_KEY_0:
-            keyboard_app().send_key(msg.value);
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK, msg.value);
             break;
         default:
             break;

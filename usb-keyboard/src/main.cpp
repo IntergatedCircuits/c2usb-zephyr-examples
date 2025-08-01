@@ -10,7 +10,7 @@
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
-#include "demo_keyboard.hpp"
+#include "simple_keyboard.hpp"
 
 using namespace magic_enum::bitwise_operators;
 
@@ -29,11 +29,11 @@ INPUT_CALLBACK_DEFINE(nullptr, input_cb, nullptr);
 
 auto& keyboard_app()
 {
-    static demo_keyboard keyb{hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK,
-                              [](const demo_keyboard::kb_leds_report& report)
-                              {
-                                  iolib_set_led(0, report.leds.test(hid::page::leds::CAPS_LOCK));
-                              }};
+    static simple_keyboard<> keyb{[](const simple_keyboard<>::kb_leds_report& report)
+                                  {
+                                      iolib_set_led(0,
+                                                    report.leds.test(hid::page::leds::CAPS_LOCK));
+                                  }};
     return keyb;
 }
 
@@ -108,7 +108,7 @@ int main(void)
         switch (msg.code)
         {
         case INPUT_KEY_0:
-            keyboard_app().send_key(msg.value);
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK, msg.value);
             break;
 #if 0
         case INPUT_KEY_1:

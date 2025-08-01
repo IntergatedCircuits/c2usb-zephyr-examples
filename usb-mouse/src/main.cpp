@@ -3,8 +3,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
-#include <hid/app/mouse.hpp>
-#include <hid/application.hpp>
+#include <high_resolution_mouse.hpp>
 #include <magic_enum.hpp>
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
@@ -33,154 +32,14 @@ static void input_cb(input_event* evt, void*)
 
 INPUT_CALLBACK_DEFINE(nullptr, input_cb, nullptr);
 
-class demo_mouse : public hid::application
-{
-    static constexpr auto LAST_BUTTON = hid::page::button(3);
-    static constexpr int16_t AXIS_LIMIT = 127;
-    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
-    static constexpr int16_t WHEEL_LIMIT = 32767;
-
-    // Linux only works if a report ID is used
-    static constexpr uint8_t MOUSE_REPORT_ID = 1;
-
-  public:
-    template <uint8_t REPORT_ID = 0>
-    struct mouse_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID>
-    {
-        hid::report_bitset<hid::page::button, hid::page::button(1), LAST_BUTTON> buttons{};
-        std::conditional_t<(AXIS_LIMIT > std::numeric_limits<int8_t>::max()), hid::le_int16_t,
-                           int8_t>
-            x{};
-        std::conditional_t<(AXIS_LIMIT > std::numeric_limits<int8_t>::max()), hid::le_int16_t,
-                           int8_t>
-            y{};
-        std::conditional_t<(WHEEL_LIMIT > std::numeric_limits<int8_t>::max()), hid::le_int16_t,
-                           int8_t>
-            wheel_y{};
-        std::conditional_t<(WHEEL_LIMIT > std::numeric_limits<int8_t>::max()), hid::le_int16_t,
-                           int8_t>
-            wheel_x{};
-
-        constexpr mouse_report_base() = default;
-
-        bool operator==(const mouse_report_base& other) const = default;
-        bool operator!=(const mouse_report_base& other) const = default;
-
-        bool steady() const { return (x == 0) && (y == 0) && (wheel_y == 0) && (wheel_x == 0); }
-    };
-    using mouse_report = mouse_report_base<MOUSE_REPORT_ID>;
-    using resolution_multiplier_report =
-        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION, MOUSE_REPORT_ID>;
-
-  private:
-    alignas(std::uintptr_t) mouse_report in_report_{};
-    alignas(std::uintptr_t) resolution_multiplier_report multiplier_report_{};
-    hid::protocol prot_{};
-
-  public:
-    static constexpr auto report_desc()
-    {
-        using namespace hid::page;
-        using namespace hid::rdf;
-
-        // clang-format off
-        return descriptor(
-            usage_page<generic_desktop>(),
-            usage(generic_desktop::MOUSE),
-            collection::application(
-                conditional_report_id<MOUSE_REPORT_ID>(),
-                usage(generic_desktop::POINTER),
-                collection::physical(
-                    // buttons
-                    usage_extended_limits(button(1), LAST_BUTTON),
-                    logical_limits<1, 1>(0, 1),
-                    report_count(static_cast<uint8_t>(LAST_BUTTON)),
-                    report_size(1),
-                    input::absolute_variable(),
-                    input::byte_padding<static_cast<uint8_t>(LAST_BUTTON)>(),
-
-                    // relative X,Y directions
-                    usage(generic_desktop::X),
-                    usage(generic_desktop::Y),
-                    logical_limits<(AXIS_LIMIT > std::numeric_limits<int8_t>::max() ? 2 : 1)>(-AXIS_LIMIT, AXIS_LIMIT),
-                    report_count(2),
-                    report_size(AXIS_LIMIT > std::numeric_limits<int8_t>::max() ? 16 : 8),
-                    input::relative_variable(),
-
-                    hid::app::mouse::high_resolution_scrolling<WHEEL_LIMIT, MAX_SCROLL_RESOLUTION>()
-                )
-            )
-        );
-        // clang-format on
-    }
-    static const hid::report_protocol& report_prot()
-    {
-        static constexpr const auto rd{report_desc()};
-        static constexpr const hid::report_protocol rp{rd};
-        return rp;
-    }
-
-    demo_mouse()
-        : hid::application(report_prot())
-    {}
-    auto send(const mouse_report& report)
-    {
-        in_report_ = report;
-        return send_report(&in_report_);
-    }
-    void start(hid::protocol prot) override
-    {
-        prot_ = prot;
-        multiplier_report_ = {};
-        receive_report(&multiplier_report_);
-        LOG_INF("HID start with protocol %s", magic_enum::enum_name(prot).data());
-    }
-    void stop() override
-    {
-        iolib_set_led(0, false);
-        LOG_INF("HID stop");
-    }
-    void set_report(hid::report::type type, const std::span<const uint8_t>& data) override
-    {
-        if (type != resolution_multiplier_report::type())
-        {
-            return;
-        }
-        if (data.size() == sizeof(resolution_multiplier_report))
-        {
-            multiplier_report_ =
-                *reinterpret_cast<const resolution_multiplier_report*>(data.data());
-        }
-        else
-        {
-            multiplier_report_.resolutions = 0;
-        }
-        iolib_set_led(0, multiplier_report_.resolutions != 0);
-        LOG_INF("multiplier report: %x (%d)", multiplier_report_.resolutions, data.size());
-        receive_report(&multiplier_report_);
-    }
-    void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override
-    {
-        if (select == mouse_report::selector())
-        {
-            send_report(&in_report_);
-            return;
-        }
-        if (select == resolution_multiplier_report::selector())
-        {
-            send_report(&multiplier_report_);
-            return;
-        }
-        // assert(false);
-    }
-    // void in_report_sent(const std::span<const uint8_t>& data) override {}
-    hid::protocol get_protocol() const override { return prot_; }
-    const auto& multiplier_report() const { return multiplier_report_; }
-};
-
 auto& mouse()
 {
-    static demo_mouse m{};
+    static high_resolution_mouse<> m(
+        [](const high_resolution_mouse<>::resolution_multiplier_report& report)
+        {
+            iolib_set_led(0, report.resolutions != 0);
+            LOG_INF("multiplier report: %x", report.resolutions);
+        });
     return m;
 }
 
@@ -245,7 +104,7 @@ int main(void)
     // button 3 is the left mouse button
     // buttons 1 and 2 are either scrolling, or moving the cursor horizontally - depending on button
     // 4
-    demo_mouse::mouse_report report{};
+    high_resolution_mouse<>::mouse_report report{};
     bool horizontal = false;
     while (true)
     {
