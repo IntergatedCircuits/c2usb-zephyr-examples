@@ -9,6 +9,7 @@
 #include <zephyr/settings/settings.h>
 #include <zephyr/shell/shell.h>
 
+#include "simple_keyboard.hpp"
 #include <port/zephyr/bluetooth/hid.hpp>
 #include <port/zephyr/bluetooth/le.hpp>
 #include <port/zephyr/message_queue.hpp>
@@ -16,8 +17,6 @@
 #include <usb/df/message.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
-
-#include "simple_keyboard.hpp"
 
 static const uint8_t adv_led = 1;
 
@@ -32,9 +31,8 @@ static int advertise(void)
     static constexpr auto ad = to_adv_data<ad_struct_count(ad_data)>(ad_data);
     static constexpr auto sd_data = join(ad_struct(BT_DATA_NAME_COMPLETE, CONFIG_BT_DEVICE_NAME));
     static constexpr auto sd = to_adv_data<ad_struct_count(sd_data)>(sd_data);
-    const bt_le_adv_param* adv_param =
-        BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME,
-                        BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL);
+    const bt_le_adv_param* adv_param = BT_LE_ADV_PARAM(
+        BT_LE_ADV_OPT_CONN, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, nullptr);
 
     auto err = bt_le_adv_start(adv_param, ad.data(), ad.size(), sd.data(), sd.size());
     if (err == 0)

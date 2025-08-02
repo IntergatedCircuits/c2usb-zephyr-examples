@@ -21,7 +21,7 @@ manifest:
     - name: nrf
       repo-path: sdk-nrf
       remote: nrfconnect
-      revision: v2.9.0
+      revision: v3.0.0
       clone-depth: 1
       import:
         # By using name-allowlist we can clone only the modules that are
@@ -31,4 +31,5 @@ manifest:
           - cmsis
           - hal_nordic
           - nrfxlib
-          - tinycrypt
+          - mbedtls
+          - oberon-psa-crypto

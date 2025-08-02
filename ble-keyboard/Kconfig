@@ -1,9 +1,15 @@
 rsource "../Kconfig"
 
-configdefault BT_DIS_MANUF
+configdefault BT_DIS_MANUF_NAME
+	default y
+
+configdefault BT_DIS_MANUF_NAME_STR
 	default DEMO_MANUFACTURER
 
-configdefault BT_DIS_MODEL
+configdefault BT_DIS_MODEL_NUMBER
+	default y
+
+configdefault BT_DIS_MODEL_NUMBER_STR
 	default DEMO_PRODUCT
 
 configdefault BT_DIS_PNP

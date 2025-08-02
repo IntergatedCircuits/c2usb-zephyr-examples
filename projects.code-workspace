@@ -5,8 +5,8 @@
 			"name": "Manifest repository"
 		},
 		{
-			"path": "../c2usb",
-			"name": "c2usb"
+			"path": "..",
+			"name": "workspace"
 		},
 		{
 			"path": "ble-keyboard"
