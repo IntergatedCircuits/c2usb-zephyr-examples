@@ -16,19 +16,19 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 0c13e84e47a4655b6d40e61b2bfc114bc668fbf8
+      revision: 5d08c6739c6e17af8fb8099b4edde1507799c417
       submodules: true
     - name: nrf
       repo-path: sdk-nrf
       remote: nrfconnect
-      revision: v3.0.0
+      revision: v3.1.0
       clone-depth: 1
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.
         name-allowlist:
           - zephyr
-          - cmsis
+          - cmsis_6
           - hal_nordic
           - nrfxlib
           - mbedtls
