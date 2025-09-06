@@ -53,7 +53,12 @@
 	},
 	"extensions": {
 		"recommendations": [
-			"nordic-semiconductor.nrf-connect-extension-pack"
+			"nordic-semiconductor.nrf-connect-extension-pack",
+			"marus25.cortex-debug",
+			"mcu-debug.peripheral-viewer",
+			"ms-vscode.vscode-embedded-tools",
+			"ms-vscode.vscode-serial-monitor",
+			"thecreativedodo.usbip-connect"
 		]
 	}
 }
