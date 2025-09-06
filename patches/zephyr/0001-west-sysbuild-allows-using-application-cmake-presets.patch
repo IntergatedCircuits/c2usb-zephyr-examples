@@ -1,66 +1,54 @@
-From 662ed0c8d056ab5ee16078f7e9e71a769521d041 Mon Sep 17 00:00:00 2001
+From f590feca1568a99caf6741cf0f0326a82a2f9e3d Mon Sep 17 00:00:00 2001
 From: Benedek Kupper <kupper.benedek@gmail.com>
-Date: Wed, 27 Aug 2025 10:09:00 +0200
+Date: Sat, 6 Sep 2025 10:30:57 +0200
 Subject: [PATCH] west sysbuild allows using application cmake presets
 
 ---
- scripts/west_commands/build.py | 27 +++++++++++++++++++++++++++
+ scripts/west_commands/build.py | 29 +++++++++++++++++++++++++++++
  share/sysbuild/.gitignore      |  1 +
- 2 files changed, 28 insertions(+)
+ 2 files changed, 30 insertions(+)
  create mode 100644 share/sysbuild/.gitignore
 
 diff --git a/scripts/west_commands/build.py b/scripts/west_commands/build.py
-index 1b7bf3b80a..89340a524c 100644
+index 1b7bf3b80a..ae931c9d46 100644
 --- a/scripts/west_commands/build.py
 +++ b/scripts/west_commands/build.py
-@@ -624,6 +624,10 @@ class Build(Forceable):
-         if user_args:
-             cmake_opts.extend(shlex.split(user_args))
- 
-+        # sysbuild has its own cmake project directory, so we need to
-+        # copy the application's CMakePresets.json file and replace the paths
-+        sysbuild_presets = SYSBUILD_PROJ_DIR / 'CMakePresets.json'
-+        source_presets = pathlib.Path(self.source_dir) / 'CMakePresets.json'
-         config_sysbuild = config_getboolean('sysbuild', None)
- 
-         if config_sysbuild is None:
-@@ -631,6 +635,20 @@ class Build(Forceable):
+@@ -631,6 +631,35 @@ class Build(Forceable):
              config_sysbuild = True
  
          if self.args.sysbuild or (config_sysbuild and not self.args.no_sysbuild):
++            # sysbuild has its own cmake project directory, so we need to
++            # copy the application's CMakePresets.json file and replace the paths
++            sysbuild_presets_link = SYSBUILD_PROJ_DIR / 'CMakePresets.json'
++            build_presets = pathlib.Path(self.build_dir) / 'CMakePresets.json'
++            source_presets = pathlib.Path(self.source_dir) / 'CMakePresets.json'
 +            try:
++                # Only copy if source exists and build doesn't, or source is newer
 +                if source_presets.exists():
-+                    with open(source_presets, 'r') as f:
-+                        content = f.read()
-+                    content = (content
-+                        .replace("${sourceDir}", self.source_dir)
-+                        .replace("${sourceParentDir}", str(pathlib.Path(self.source_dir).parent))
-+                        .replace("${sourceDirName}", str(pathlib.Path(self.source_dir).name))
++                    copy_needed = (
++                        not build_presets.exists() or
++                        source_presets.stat().st_mtime > build_presets.stat().st_mtime
 +                    )
-+                    with open(sysbuild_presets, 'w') as f:
-+                        f.write(content)
++                    if copy_needed:
++                        with open(source_presets, 'r') as f:
++                            content = f.read()
++                        content = (content
++                            .replace("${sourceDir}", self.source_dir)
++                            .replace("${sourceParentDir}", str(pathlib.Path(self.source_dir).parent))
++                            .replace("${sourceDirName}", str(pathlib.Path(self.source_dir).name))
++                        )
++                        with open(build_presets, 'w') as f:
++                            f.write(content)
++                # Create symlink if needed
++                if sysbuild_presets_link.exists() or sysbuild_presets_link.is_symlink():
++                    sysbuild_presets_link.unlink()
++                sysbuild_presets_link.symlink_to(build_presets)
 +            except Exception as e:
-+                self.wrn(f'Failed to adopt CMakePresets.json to sysbuild: {e}')
++                self.wrn(f'Failed to mirror CMakePresets.json to build dir and link: {e}')
 +
              cmake_opts.extend([f'-S{SYSBUILD_PROJ_DIR}',
                                 f'-DAPP_DIR:PATH={self.source_dir}'])
          else:
-@@ -650,6 +668,15 @@ class Build(Forceable):
-             final_cmake_args.extend(cmake_opts)
-         run_cmake(final_cmake_args, dry_run=self.args.dry_run)
- 
-+        # clean up the sysbuild CMakePresets.json file after each run
-+        if sysbuild_presets.exists():
-+            try:
-+                sysbuild_presets.unlink()
-+            except FileNotFoundError:
-+                pass
-+            except Exception as e:
-+                self.wrn(f'Failed to remove sysbuild CMakePresets.json: {e}')
-+
-     def _run_pristine(self):
-         self._banner(f'making build dir {self.build_dir} pristine')
-         if not is_zephyr_build(self.build_dir):
 diff --git a/share/sysbuild/.gitignore b/share/sysbuild/.gitignore
 new file mode 100644
 index 0000000000..71585613e9
