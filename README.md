@@ -13,9 +13,31 @@ command:
 west init -m https://github.com/IntergatedCircuits/c2usb-zephyr-examples c2usb-workspace
 # update Zephyr modules
 cd c2usb-workspace
-west update
-west patch
+west update && west patch
 ```
+
+## Building and running
+
+To build an application, run the following command:
+```shell
+cd c2usb-zephyr-examples
+west build -b nrf52840dk/nrf52840 --build-dir usb-keyboard/build usb-keyboard
+```
+
+Once you have built the application, run the following command to flash it:
+
+```shell
+west flash --build-dir usb-keyboard/build
+```
+
+## Software Development
+
+MS Visual Studio Code is the recommended IDE for development.
+Open the `projects.code-workspace` file in vscode, and install the recommended extensions
+(better create a dedicated zephyr profile).
+Use `west vscode --build-dir usb-keyboard/build` to generate vscode C/C++ indexer configuration.
+`--build` and `--debug` additional arguments create build tasks and debug launch configurations,
+from a successful build.
 
 ## Application Index
 
@@ -41,18 +63,3 @@ depending on the state of button 4. Button 3 controls the left mouse button.
 ### usb-shell
 
 Demonstrating USB serial port functionality with shell access to the zephyr OS.
-
-## Building and running
-
-To build an application, run the following command:
-
-```shell
-cd c2usb-zephyr-examples
-west build -b nrf52840dk/nrf52840 usb-keyboard
-```
-
-Once you have built the application, run the following command to flash it:
-
-```shell
-west flash
-```
