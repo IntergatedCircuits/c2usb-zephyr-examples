@@ -68,16 +68,49 @@ int main(void)
         [](usb::df::device& dev, usb::df::device::event ev)
         {
             using event = enum usb::df::device::event;
+            using namespace std::literals;
+            static high_resolution_mouse<>::resolution_multiplier_report report_backup{};
+            static os::zephyr::tick_timer::time_point last_reset_time{};
+
+            /* Linux hosts produce erroneous behavior when waking up (on a subset of USB ports):
+             * 1. L2 -> L0
+             * 2. USB reset
+             * 3. L0 -> L2
+             * 4. L2 -> L0
+             * 5. USB re-enumeration, this time without negotiating high-resolution scrolling
+             */
             if (ev == event::CONFIGURATION_CHANGE)
             {
-                LOG_INF("USB configured: %u, granted current: %uuA", dev.configured(),
+                LOG_INF("USB configured: %u, granted current: %uuA", (unsigned)dev.configured(),
                         dev.granted_bus_current_uA());
+                if (!dev.configured())
+                {
+                    last_reset_time = os::zephyr::tick_timer::now();
+                }
             }
             else
             {
                 LOG_INF("USB power state: %s, granted current: %uuA",
                         magic_enum::enum_name(dev.power_state()).data(),
                         dev.granted_bus_current_uA());
+                if (dev.power_state() == usb::power::state::L2_SUSPEND)
+                {
+                    if (dev.configured())
+                    {
+                        report_backup = mouse().multiplier_report();
+                    }
+                    else if (std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 os::zephyr::tick_timer::now() - last_reset_time) < 20ms)
+                    {
+                        // reset happened recently, restore the last known multiplier
+                        mouse().set_report(
+                            high_resolution_mouse<>::resolution_multiplier_report::type(),
+                            std::span<const uint8_t>(
+                                const_cast<const uint8_t*>(report_backup.data()),
+                                sizeof(report_backup)));
+                        LOG_INF("restored multiplier: %x", report_backup.resolutions);
+                    }
+                }
             }
         });
 
