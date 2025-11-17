@@ -5,12 +5,11 @@
 
 #include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
+#include <simple_keyboard.hpp>
 #include <usb/df/class/hid.hpp>
 #include <usb/df/device.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
-
-#include "simple_keyboard.hpp"
 
 using namespace magic_enum::bitwise_operators;
 
@@ -63,7 +62,7 @@ int main(void)
         {
             if (ev == usb::df::device::event::CONFIGURATION_CHANGE)
             {
-                LOG_INF("USB configured: %u, granted current: %uuA", dev.configured(),
+                LOG_INF("USB configured: %u, granted current: %uuA", (unsigned)dev.configured(),
                         dev.granted_bus_current_uA());
             }
             else
@@ -110,14 +109,15 @@ int main(void)
         case INPUT_KEY_0:
             keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_CAPS_LOCK, msg.value);
             break;
-#if 0
         case INPUT_KEY_1:
-            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_ENTER, msg.value);
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_BACKSLASH_PIPE, msg.value);
             break;
         case INPUT_KEY_2:
+            keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_ENTER, msg.value);
+            break;
+        case INPUT_KEY_3:
             keyboard_app().send_key(hid::page::keyboard_keypad::KEYBOARD_F1, msg.value);
             break;
-#endif
         default:
             break;
         }

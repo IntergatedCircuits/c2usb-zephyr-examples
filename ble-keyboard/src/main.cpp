@@ -224,7 +224,7 @@ static auto& hog_service()
     static const auto security = security::ENCRYPT;
     static const auto features = flags::NORMALLY_CONNECTABLE | flags::REMOTE_WAKE;
 
-    static service_instance<hid::report_protocol_properties(simple_keyboard<>::report_desc()),
+    static service_instance<hid::app::keyboard::app_report_descriptor<0>(),
                             boot_protocol_mode::KEYBOARD>
         hog{keyboard_app(), security, features};
     return hog;
