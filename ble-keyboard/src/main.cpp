@@ -12,9 +12,9 @@
 #include "simple_keyboard.hpp"
 #include <port/zephyr/bluetooth/hid.hpp>
 #include <port/zephyr/bluetooth/le.hpp>
-#include <port/zephyr/message_queue.hpp>
 #include <raw_to_hex_string.hpp>
 #include <usb/df/message.hpp>
+#include <zephyr/message_queue.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
@@ -53,7 +53,7 @@ static int advertise(void)
 
 auto& pairing_msgq()
 {
-    static os::zephyr::message_queue_instance<::bt_conn*, CONFIG_BT_MAX_CONN> msgq;
+    static zephyr::message_queue_instance<::bt_conn*, CONFIG_BT_MAX_CONN> msgq;
     return msgq;
 }
 
@@ -232,7 +232,7 @@ static auto& hog_service()
 
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue_instance<input_event, 2> msgq;
+    static zephyr::message_queue_instance<input_event, 2> msgq;
     return msgq;
 }
 

@@ -16,12 +16,13 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 988d8ad7fc615d9f9d3d73c9af60fa8c0410480e
-      submodules: true
+      revision: 6874aa02d3a45cdc3b0ceec7ed312f12a8e85a12
+      import: true
+
     - name: nrf
       repo-path: sdk-nrf
       remote: nrfconnect
-      revision: v3.1.0
+      revision: v3.2.1
       clone-depth: 1
       import:
         # By using name-allowlist we can clone only the modules that are

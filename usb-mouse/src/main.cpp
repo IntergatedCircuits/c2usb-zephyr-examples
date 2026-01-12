@@ -5,10 +5,10 @@
 
 #include <high_resolution_mouse.hpp>
 #include <magic_enum.hpp>
-#include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <usb/df/class/hid.hpp>
 #include <usb/df/device.hpp>
+#include <zephyr/message_queue.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
@@ -20,7 +20,7 @@ struct kb_event
 
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue_instance<kb_event, 2> msgq;
+    static zephyr::message_queue_instance<kb_event, 2> msgq;
     return msgq;
 }
 

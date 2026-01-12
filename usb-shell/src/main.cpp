@@ -5,7 +5,6 @@
 #include <hid/app/mouse.hpp>
 #include <hid/application.hpp>
 #include <magic_enum.hpp>
-#include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <port/zephyr/usb_shell.hpp>
 #include <usb/df/device.hpp>

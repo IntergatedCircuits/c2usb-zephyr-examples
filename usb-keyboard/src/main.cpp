@@ -3,11 +3,11 @@
 #include <zephyr/input/input.h>
 #include <zephyr/logging/log.h>
 
-#include <port/zephyr/message_queue.hpp>
 #include <port/zephyr/udc_mac.hpp>
 #include <simple_keyboard.hpp>
 #include <usb/df/class/hid.hpp>
 #include <usb/df/device.hpp>
+#include <zephyr/message_queue.hpp>
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
@@ -15,7 +15,7 @@ using namespace magic_enum::bitwise_operators;
 
 auto& kb_msgq()
 {
-    static os::zephyr::message_queue_instance<input_event, 2> msgq;
+    static zephyr::message_queue_instance<input_event, 2> msgq;
     return msgq;
 }
 
