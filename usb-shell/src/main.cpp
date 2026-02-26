@@ -38,7 +38,7 @@ int main(void)
             using event = enum usb::df::device::event;
             if (ev == event::CONFIGURATION_CHANGE)
             {
-                LOG_INF("USB configured: %u, granted current: %uuA", dev.configured(),
+                LOG_INF("USB configured: %u, granted current: %uuA", (unsigned)dev.configured(),
                         dev.granted_bus_current_uA());
             }
             else

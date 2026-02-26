@@ -22,34 +22,55 @@
 		}
 	],
 	"settings": {
-		"editor.formatOnSave": true,
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"*.hpp": "cpp",
+			"*.cpp": "cpp",
+			"VERSION": "plaintext"
+		},
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false,
+		"[c]": {
+			"editor.defaultFormatter": "ms-vscode.cpptools",
+			"editor.formatOnSave": true
+		},
+		"[cpp]": {
+			"editor.defaultFormatter": "ms-vscode.cpptools",
+			"editor.formatOnSave": true
+		},
+		"cmake.configureOnOpen": false,
+		"cmake.enableAutomaticKitScan": false,
+		"cmake.options.advanced": {
+			"build": {
+				"statusBarVisibility": "hidden"
+			},
+			"launch": {
+				"statusBarVisibility": "hidden"
+			},
+			"debug": {
+				"statusBarVisibility": "hidden"
+			}
+		},
+		"cmake.useCMakePresets": "always",
+		"devicetree.zephyr": "${workspaceFolder:workspace}/zephyr",
+		"[json]": {
+			"editor.defaultFormatter": "vscode.json-language-features"
+		},
+		"[jsonc]": {
+			"editor.defaultFormatter": "vscode.json-language-features"
+		},
 		"nrf-connect.applications": [
 			"${workspaceFolder}/ble-keyboard",
 			"${workspaceFolder}/usb-keyboard",
 			"${workspaceFolder}/usb-mouse",
 			"${workspaceFolder}/usb-shell"
 		],
-    "nrf-connect.topdir": "${workspaceFolder}/..",
-		"nrf-connect.applicationOptions": {
-			"${workspaceFolder}/device": {
-				"flash": {
-					"softreset": true
-				}
-			}
-		},
+		"nrf-connect.topdir": "${workspaceFolder:workspace}",
 		"nrf-connect.boardRoots": [
 			"${workspaceFolder}/"
 		],
-		"files.associations": {
-			"*.h": "c",
-			"*.c": "c",
-			"*.hpp": "cpp",
-			"*.cpp": "cpp"
-		},
-		"cmake.useCMakePresets": "always",
-		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-		"C_Cpp.workspaceParsingPriority": "high",
-		"C_Cpp.autoAddFileAssociations": false
 	},
 	"extensions": {
 		"recommendations": [

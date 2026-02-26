@@ -212,7 +212,8 @@ class WestVsCode(WestCommand):
                 "runToEntryPoint": "main",
                 "servertype": servertype,
                 "serverArgs": serverArgs,
-                "gdbPath": gdbPath
+                "gdbPath": gdbPath,
+                "rtos": "/opt/SEGGER/JLink/GDBServer/RTOSPlugin_Zephyr.so"
             }
             # workaround for jlink: add separate device argument
             for arg in serverArgs:
